@@ -9,3 +9,7 @@ image-$(CONFIG_MACH_AT91SAM9X5EK) += barebox-at91sam9x5ek.img
 pblx-$(CONFIG_MACH_AT91SAM9263EK) += start_at91sam9263ek
 FILE_barebox-at91sam9263ek.img = start_at91sam9263ek.pblx
 image-$(CONFIG_MACH_AT91SAM9263EK) += barebox-at91sam9263ek.img
+
+pblx-$(CONFIG_MACH_SKOVARM9CPU) += start_skovarm9cpu
+FILE_barebox-skovarm9cpu.img = start_skovarm9cpu.pblx
+image-$(CONFIG_MACH_SKOVARM9CPU) += barebox-skovarm9cpu.img

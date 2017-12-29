@@ -1,0 +1,351 @@
+/*
+ * Device Tree file for SKOV ARM9 CPU board with 128 MB RAM and Logic Technology Display
+ *
+ *  Copyright (C) 2018 Sam Ravnborg <sam@ravnborg.org>
+ *
+ * Licensed under GPLv2 only
+ */
+/dts-v1/;
+#include "arm/at91sam9263.dtsi"
+
+/ {
+	model = "SKOV ARM9 CPU";
+	compatible = "skov,arm9-cpu", "atmel,at91sam9263", "atmel,at91sam9";
+
+	chosen {
+		bootargs = "mem=64M root=/dev/mtdblock5 rw rootfstype=ubifs";
+		stdout-path = "serial0:115200n8";
+
+		environment@0 {
+			compatible = "barebox,environment";
+			device-path = &flash, "partname:bareboxenv";
+		};
+	};
+
+	memory {
+		reg = <0x20000000 0x4000000>;
+	};
+
+	clocks {
+		slow_xtal {
+			clock-frequency = <32768>;
+		};
+
+		main_xtal {
+			clock-frequency = <16000000>;
+		};
+	};
+
+	ahb {
+		apb {
+			dbgu: serial@ffffee00 {
+				status = "okay";
+			};
+
+			usart0: serial@fff8c000 {
+				pinctrl-0 = <
+					&pinctrl_usart0
+					&pinctrl_usart0_rts
+					&pinctrl_usart0_cts>;
+				status = "okay";
+			};
+
+			macb0: ethernet@fffbc000 {
+				phy-mode = "rmii";
+				status = "okay";
+/*			
+				ethernet-phy@0 {
+					reg = <0x1>;
+					interrupt-parent = <&pioE>;
+					interrupts = <31 IRQ_TYPE_LEVEL_LOW>;
+				};
+*/
+			};
+
+			mmc1: mmc@fff84000 {
+				pinctrl-0 = <
+					&pinctrl_board_mmc1
+					&pinctrl_mmc1_clk
+					&pinctrl_mmc1_slot0_cmd_dat0
+					&pinctrl_mmc1_slot0_dat1_3>;
+				cd-gpios = <&pioE 18 GPIO_ACTIVE_HIGH>;
+				status = "okay";
+				slot@0 {
+					reg = <0>;
+					bus-width = <4>;
+					cd-gpios = <&pioE 18 GPIO_ACTIVE_HIGH>;
+					wp-gpios = <&pioE 19 GPIO_ACTIVE_HIGH>;
+				};
+			};
+
+			pinctrl@fffff200 {
+				mmc1 {
+					pinctrl_board_mmc1: mmc1-board {
+						atmel,pins =
+							<AT91_PIOE 18 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH 	/* PE18 gpio CD pin pull up and deglitch */
+							 AT91_PIOE 19 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PE19 gpio WP pin pull up */
+					};
+				};
+
+				inputs {
+					pinctrl_disp_type: disp_type-0 {
+						atmel,pins =
+							<AT91_PIOD 2 AT91_PERIPH_A AT91_PINCTRL_PULL_UP>;    	      	/* PD2 gpio DISP_TYPE (Seiko or Logic) */
+					};
+					pinctrl_logic_type: logic_type-0 {
+						atmel,pins =
+							<AT91_PIOB 8 AT91_PERIPH_A AT91_PINCTRL_PULL_UP>;                /* PB8 gpio LOGIC_TYPE (l2 or l6) */
+					};
+				};
+				/* clk appear not to be ready at first probe.
+				 * so this hangs barebox if enabled
+				 * pioD: gpio@fffff800 {
+				 *	DISP_TYPE {
+				 *		gpio-hog;
+				 *		input;
+				 *		gpios = <&pioD 2>;
+				 *		line-name = "DISP_TYPE";
+				 *	};
+				 * };
+				 *
+				 */
+
+				pioB: gpio@fffff400 {
+					/* Enable the 50MHz oscillator for Ethernet PHY */
+					phy_50mhz {
+						gpio-hog;
+						gpios = <27 GPIO_ACTIVE_LOW>;
+						output-high;
+						line-name = "PHY 50 MHz oscillator";
+					};
+
+					LOGIC_TYPE {
+						gpio-hog;
+						input;
+						gpios = <&pioB 8>;
+						line-name = "LOGIC_TYPE";
+					};
+				};
+				fb {
+					pinctrl_board_fb: fb-0 {
+						atmel,pins =
+						       <AT91_PIOC 0  AT91_PERIPH_A AT91_PINCTRL_NONE    /* LCDVSYNC */
+							AT91_PIOC 1  AT91_PERIPH_A AT91_PINCTRL_NONE    /* LCDHSYNC */
+							AT91_PIOC 2  AT91_PERIPH_A AT91_PINCTRL_NONE    /* LCDDOTCK */
+							AT91_PIOC 3  AT91_PERIPH_A AT91_PINCTRL_NONE    /* LCDDEN */
+							AT91_PIOB 9  AT91_PERIPH_B AT91_PINCTRL_NONE    /* LCDCC */
+							AT91_PIOC 6  AT91_PERIPH_A AT91_PINCTRL_NONE    /* LCDD2 */
+							AT91_PIOC 7  AT91_PERIPH_A AT91_PINCTRL_NONE    /* LCDD3 */
+							AT91_PIOC 8  AT91_PERIPH_A AT91_PINCTRL_NONE    /* LCDD4 */
+							AT91_PIOC 9  AT91_PERIPH_A AT91_PINCTRL_NONE    /* LCDD5 */
+							AT91_PIOC 10 AT91_PERIPH_A AT91_PINCTRL_NONE    /* LCDD6 */
+							AT91_PIOC 11 AT91_PERIPH_A AT91_PINCTRL_NONE    /* LCDD7 */
+							AT91_PIOC 14 AT91_PERIPH_A AT91_PINCTRL_NONE    /* LCDD10 */
+							AT91_PIOC 15 AT91_PERIPH_A AT91_PINCTRL_NONE    /* LCDD11 */
+							AT91_PIOC 16 AT91_PERIPH_A AT91_PINCTRL_NONE    /* LCDD12 */
+							AT91_PIOC 12 AT91_PERIPH_B AT91_PINCTRL_NONE    /* LCDD13 */
+							AT91_PIOC 18 AT91_PERIPH_A AT91_PINCTRL_NONE    /* LCDD14 */
+							AT91_PIOC 19 AT91_PERIPH_A AT91_PINCTRL_NONE    /* LCDD15 */
+							AT91_PIOC 22 AT91_PERIPH_A AT91_PINCTRL_NONE    /* LCDD18 */
+							AT91_PIOC 23 AT91_PERIPH_A AT91_PINCTRL_NONE    /* LCDD19 */
+							AT91_PIOC 24 AT91_PERIPH_A AT91_PINCTRL_NONE    /* LCDD20 */
+							AT91_PIOC 17 AT91_PERIPH_B AT91_PINCTRL_NONE    /* LCDD21 */
+							AT91_PIOC 26 AT91_PERIPH_A AT91_PINCTRL_NONE    /* LCDD22 */
+							AT91_PIOC 27 AT91_PERIPH_A AT91_PINCTRL_NONE>;  /* LCDD23 */
+					};
+				};
+			};
+
+			spi0: spi@fffa4000 {
+				status = "okay";
+				cs-gpios = <0>, <&pioA 3 0>, <0>, <&pioB 11 0>;
+
+				mcp3002@0 {
+					compatible = "microchip,mcp3002";
+					reg = <1>;
+					spi-max-frequency = <1000000>;
+				};
+
+				tsc2046@0 {
+					reg = <3>;
+					compatible = "ti,tsc2046";
+					interrupts-extended = <&pioA 15 IRQ_TYPE_EDGE_BOTH>;
+					spi-max-frequency = <1000000>;
+					pendown-gpio = <&pioA 15 GPIO_ACTIVE_LOW>;
+
+					ti,x-min = /bits/ 16 <800>;
+					ti,x-max = /bits/ 16 <3830>;
+					ti,y-min = /bits/ 16 <500>;
+					ti,y-max = /bits/ 16 <3830>;
+					ti,vref-delay-usecs = /bits/ 16 <300>;
+					ti,x-plate-ohms = /bits/ 16 <642>;
+					ti,y-plate-ohms = /bits/ 16 <295>;
+					ti,pressure-max = /bits/ 16 <1500>;
+					ti,debounce-rep = /bits/ 16 <8>;
+					ti,debounce-tol = /bits/ 16 <(~0)>;
+					ti,debounce-max = /bits/ 16 <100>;
+
+					wakeup-source;
+				};
+			};
+
+			watchdog@fffffd40 {
+				status = "okay";
+			};
+		};
+
+		fb0: fb@0x00700000 {
+			display = <&display0>;
+			status = "okay";
+
+			display0: display {
+				bits-per-pixel = <16>;
+				atmel,lcdcon-backlight;
+				atmel,dmacon = <0x1>;
+				atmel,lcdcon2 = <0x80008002>;
+				atmel,guard-time = <1>;
+				atmel,lcd-wiring-mode = "BGR";
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_board_fb>;
+				atmel,power-control-gpio = <&pioA 30 GPIO_ACTIVE_HIGH>;
+
+				display-timings {
+					native-mode = <&l2rt>;
+					l2rt: l2rt {
+						clock-frequency = <33000000>;
+						hactive = <800>;
+						vactive = <480>;
+						hback-porch = <85>;
+						hfront-porch = <112>;
+						vback-porch = <29>;
+						vfront-porch = <38>;
+						hsync-len = <3>;
+						vsync-len = <3>;
+						pixelclk-active = <1>;
+						hsync-active = <0>;
+						vsync-active = <0>;
+						de-active = <1>;
+					};
+					l6rt: l6rt {
+						clock-frequency = <33000000>;
+						hactive = <800>;
+						vactive = <480>;
+						hback-porch = <43>;
+						hfront-porch = <154>;
+						vback-porch = <20>;
+						vfront-porch = <47>;
+						hsync-len = <3>;
+						vsync-len = <3>;
+						pixelclk-active = <1>;
+						hsync-active = <0>;
+						vsync-active = <0>;
+						de-active = <1>;
+					};
+					/* TODO - not updated */
+					seiko: seiko {
+						clock-frequency = <33000000>;
+						hactive = <800>;
+						vactive = <480>;
+						hback-porch = <43>;
+						hfront-porch = <154>;
+						vback-porch = <20>;
+						vfront-porch = <47>;
+						hsync-len = <3>;
+						vsync-len = <3>;
+						pixelclk-active = <1>;
+						hsync-active = <0>;
+						vsync-active = <0>;
+						de-active = <1>;
+					};
+				};
+			};
+		};
+
+		usb0: ohci@00a00000 {
+			num-ports = <2>;
+			status = "okay";
+			atmel,vbus-gpio = <&pioA 24 GPIO_ACTIVE_HIGH
+					   &pioA 21 GPIO_ACTIVE_HIGH
+					  >;
+		};
+
+		flash: nor_flash@10000000 {
+			compatible = "cfi-flash";
+			reg = <0x10000000 0x8000000>;
+			linux,mtd-name = "physmap-flash.0";
+			bank-width = <2>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			barebox@0 {
+				label = "barebox";
+				reg = <0x00000 0x40000>;
+			};
+
+			bareboxenv@40000 {
+				label = "bareboxenv";
+				reg = <0x40000 0x10000>;
+			};
+
+			kernel@50000 {
+				label = "kernel";
+				reg = <0x50000 0x300000>;
+			};
+
+			root@350000  {
+				label = "root";
+				reg = <0x350000 0x4B0000>;
+			};
+		};
+
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		D0 {
+			label = "D0";
+			gpios = <&pioD 0 GPIO_ACTIVE_LOW>;
+			linux,default-trigger = "heartbeat";
+		};
+
+		D1 {
+			label = "D1";
+			gpios = <&pioD 1 GPIO_ACTIVE_LOW>;
+			linux,default-trigger = "mmc0";
+		};
+
+		D2 {
+			label = "D2";
+			gpios = <&pioD 7 GPIO_ACTIVE_LOW>;
+		};
+	};
+
+	gpio_keys {
+		compatible = "gpio-keys";
+
+		boot_mode_select {
+			label = "boot mode";
+			gpios = <&pioB 3 GPIO_ACTIVE_LOW>;
+			linux,code = <272>;
+		};
+	};
+
+	inputs {
+		compatible = "atmel,at91sam9x5-pinctrl, atmel,at91rm9200-pinctrl", "simple-bus";
+		pinctrl-names = "default";
+		pinctrl-0 = <
+			&pinctrl_disp_type
+			&pinctrl_logic_type>;
+	};
+
+	i2c-gpio-0 {
+		status = "okay";
+
+		24c512@50 {
+			compatible = "24c512";
+			reg = <0x50>;
+			pagesize = <128>;
+		};
+	};
+};
