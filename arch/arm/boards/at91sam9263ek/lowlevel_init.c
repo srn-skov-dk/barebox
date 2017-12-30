@@ -115,7 +115,7 @@ static void __bare_init at91sam9263ek_init(void)
 	                  NULL);
 }
 
-void __naked __bare_init barebox_arm_reset_vector(void)
+ENTRY_FUNCTION(start_at91sam9263ek, r0, r1, r2)
 {
 	arm_cpu_lowlevel_init();
 
